@@ -4,12 +4,44 @@
 #include <sys/time.h>
 #include <string.h>
 #include <assert.h>
+
 #include <xmmintrin.h>
-#include METHOD
 
 #define TEST_W 4096
 #define TEST_H 4096
+#include "impl.c"
 
+typedef struct object Interface;
+typedef void (*func_t)(int *src, int *dst, int w, int h);
+
+struct object {
+    func_t transpose;
+};
+
+int init_naive_transpose(Interface **self)
+{
+    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    (*self) -> transpose = naive_transpose;
+    return 0;
+}
+
+int init_sse_transpose(Interface **self)
+{
+    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    (*self) -> transpose = sse_transpose;
+    return 0;
+}
+
+int init_sse_prefetch_transpose(Interface **self)
+{
+    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    (*self) -> transpose = sse_prefetch_transpose;
+    return 0;
+}
+
+/* provide the implementations of naive_transpose,
+* sse_transpose, sse_prefetch_transpose
+ */
 
 static long diff_in_us(struct timespec t1, struct timespec t2)
 {
@@ -26,31 +58,36 @@ static long diff_in_us(struct timespec t1, struct timespec t2)
 
 int main()
 {
-    // /* verify the result of 4x4 matrix */
-    // {
-    //     int testin[16] = { 0, 1,  2,  3,  4,  5,  6,  7,
-    //                        8, 9, 10, 11, 12, 13, 14, 15
-    //                      };
-    //     int testout[16];
-    //     int expected[16] = { 0, 4,  8, 12, 1, 5,  9, 13,
-    //                          2, 6, 10, 14, 3, 7, 11, 15
-    //                        };
-    //
-    //     for (int y = 0; y < 4; y++) {
-    //         for (int x = 0; x < 4; x++)
-    //             printf(" %2d", testin[y * 4 + x]);
-    //         printf("\n");
-    //     }
-    //     printf("\n");
-    //     sse_transpose(testin, testout, 4, 4);
-    //     for (int y = 0; y < 4; y++) {
-    //         for (int x = 0; x < 4; x++)
-    //             printf(" %2d", testout[y * 4 + x]);
-    //         printf("\n");
-    //     }
-    //     assert(0 == memcmp(testout, expected, 16 * sizeof(int)) &&
-    //            "Verification fails");
-    // }
+
+    Interface *interface = NULL;
+
+#ifdef NAIVE_TRANSPOSE
+    if (init_naive_transpose(&interface) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_TRANSPOSE
+    if (init_sse_transpose(&interface) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE
+    if (init_sse_prefetch_transpose(&interface) == -1)
+        printf("error.");
+#endif
+
+    /* verify the result of 4x4 matrix */
+    {
+        int testin[16] = { 0, 1,  2,  3,  4,  5,  6,  7,
+                           8, 9, 10, 11, 12, 13, 14, 15
+                         };
+        int testout[16];
+        int expected[16] = { 0, 4,  8, 12, 1, 5,  9, 13,
+                             2, 6, 10, 14, 3, 7, 11, 15
+                           };
+
+        interface->transpose(testin, testout, 4, 4);
+        assert(0 == memcmp(testout, expected, 16 * sizeof(int)) &&
+               "Verification fails");
+    }
 
     {
         struct timespec start, end;
@@ -64,25 +101,18 @@ int main()
             for (int x = 0; x < TEST_W; x++)
                 *(src + y * TEST_W + x) = rand();
 
-#ifdef SSE_PREFETCH_TRANSPOSE
         clock_gettime(CLOCK_REALTIME, &start);
-        sse_prefetch_transpose(src, out0, TEST_W, TEST_H);
+        interface->transpose(src, out0, TEST_W, TEST_H);
         clock_gettime(CLOCK_REALTIME, &end);
-        printf("sse prefetch: \t %ld us\n", diff_in_us(start, end));
-#endif
-
-#ifdef SSE_TRANSPOSE
-        clock_gettime(CLOCK_REALTIME, &start);
-        sse_transpose(src, out1, TEST_W, TEST_H);
-        clock_gettime(CLOCK_REALTIME, &end);
-        printf("sse: \t\t %ld us\n", diff_in_us(start, end));
-#endif
 
 #ifdef NAIVE_TRANSPOSE
-        clock_gettime(CLOCK_REALTIME, &start);
-        naive_transpose(src, out2, TEST_W, TEST_H);
-        clock_gettime(CLOCK_REALTIME, &end);
-        printf("naive: \t\t %ld us\n", diff_in_us(start, end));
+        printf("NAIVE_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
+#endif
+#ifdef SSE_TRANSPOSE
+        printf("SSE_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE
+        printf("SSE_PREFETCH_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
 #endif
 
         free(src);
