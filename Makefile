@@ -1,6 +1,6 @@
 CFLAGS = -msse2 --std gnu99 -O0 -Wall -Wextra
 
-EXEC = naive_transpose sse_transpose sse_prefetch_transpose
+EXEC = naive_transpose sse_transpose sse_prefetch_transpose calculate
 GIT_HOOKS := .git/hooks/applied
 CC ?= gcc
 SRCS_common = main.c
@@ -33,5 +33,14 @@ perf: $(EXEC)
 		-e cache-misses,cache-references,instructions,cycles \
 		./sse_prefetch_transpose
 
+output.txt: calculate perf
+	./calculate
+
+plot: output.txt
+	gnuplot scripts/runtime.gp
+
+calculate: calculate.c
+	$(CC) $(CFLAGS) $^ -o $@
+
 clean:
-	$(RM) $(EXEC) *.o perf.*
+	$(RM) $(EXEC) *.o perf.* *.txt

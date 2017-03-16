@@ -11,30 +11,30 @@
 #define TEST_H 4096
 #include "impl.c"
 
-typedef struct object Interface;
+typedef struct object Object;
 typedef void (*func_t)(int *src, int *dst, int w, int h);
 
 struct object {
     func_t transpose;
 };
 
-int init_naive_transpose(Interface **self)
+int init_naive_transpose(Object **self)
 {
-    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    if ((*self = malloc(sizeof(Object))) == NULL) return -1;
     (*self) -> transpose = naive_transpose;
     return 0;
 }
 
-int init_sse_transpose(Interface **self)
+int init_sse_transpose(Object **self)
 {
-    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    if ((*self = malloc(sizeof(Object))) == NULL) return -1;
     (*self) -> transpose = sse_transpose;
     return 0;
 }
 
-int init_sse_prefetch_transpose(Interface **self)
+int init_sse_prefetch_transpose(Object **self)
 {
-    if ((*self = malloc(sizeof(Interface))) == NULL) return -1;
+    if ((*self = malloc(sizeof(Object))) == NULL) return -1;
     (*self) -> transpose = sse_prefetch_transpose;
     return 0;
 }
@@ -59,18 +59,21 @@ static long diff_in_us(struct timespec t1, struct timespec t2)
 int main()
 {
 
-    Interface *interface = NULL;
+    Object *o = NULL;
 
 #ifdef NAIVE_TRANSPOSE
-    if (init_naive_transpose(&interface) == -1)
+#define OUT_FILE "NAIVE_TRANSPOSE.txt"
+    if (init_naive_transpose(&o) == -1)
         printf("error.");
 #endif
 #ifdef SSE_TRANSPOSE
-    if (init_sse_transpose(&interface) == -1)
+#define OUT_FILE "SSE_TRANSPOSE.txt"
+    if (init_sse_transpose(&o) == -1)
         printf("error.");
 #endif
 #ifdef SSE_PREFETCH_TRANSPOSE
-    if (init_sse_prefetch_transpose(&interface) == -1)
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
 
@@ -84,7 +87,7 @@ int main()
                              2, 6, 10, 14, 3, 7, 11, 15
                            };
 
-        interface->transpose(testin, testout, 4, 4);
+        o->transpose(testin, testout, 4, 4);
         assert(0 == memcmp(testout, expected, 16 * sizeof(int)) &&
                "Verification fails");
     }
@@ -102,17 +105,26 @@ int main()
                 *(src + y * TEST_W + x) = rand();
 
         clock_gettime(CLOCK_REALTIME, &start);
-        interface->transpose(src, out0, TEST_W, TEST_H);
+        o->transpose(src, out0, TEST_W, TEST_H);
         clock_gettime(CLOCK_REALTIME, &end);
 
+        long int cpu_time = diff_in_us(start, end);
+
+        printf("%s\n",OUT_FILE);
+        FILE *output = fopen(OUT_FILE, "a");
+        fprintf(output, "Execution Time: %ld us\n", cpu_time);
+        fclose(output);
+
+
+
 #ifdef NAIVE_TRANSPOSE
-        printf("NAIVE_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
+        printf("NAIVE_TRANSPOSE: \t %ld us\n", cpu_time);
 #endif
 #ifdef SSE_TRANSPOSE
-        printf("SSE_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
+        printf("SSE_TRANSPOSE: \t %ld us\n", cpu_time);
 #endif
 #ifdef SSE_PREFETCH_TRANSPOSE
-        printf("SSE_PREFETCH_TRANSPOSE: \t %ld us\n", diff_in_us(start, end));
+        printf("SSE_PREFETCH_TRANSPOSE: \t %ld us\n", cpu_time);
 #endif
 
         free(src);
