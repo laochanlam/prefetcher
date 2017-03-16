@@ -12,25 +12,11 @@
 #include "impl.c"
 
 typedef struct object Object;
-typedef void (*func_t)(int *src, int *dst, int w, int h);
+typedef void (*func_t)(int *src, int *dst, int w, int h, int PFDIST);
 
 struct object {
     func_t transpose;
 };
-
-int init_naive_transpose(Object **self)
-{
-    if ((*self = malloc(sizeof(Object))) == NULL) return -1;
-    (*self) -> transpose = naive_transpose;
-    return 0;
-}
-
-int init_sse_transpose(Object **self)
-{
-    if ((*self = malloc(sizeof(Object))) == NULL) return -1;
-    (*self) -> transpose = sse_transpose;
-    return 0;
-}
 
 int init_sse_prefetch_transpose(Object **self)
 {
@@ -61,21 +47,49 @@ int main()
 
     Object *o = NULL;
 
-#ifdef NAIVE_TRANSPOSE
-#define OUT_FILE "NAIVE_TRANSPOSE.txt"
-    if (init_naive_transpose(&o) == -1)
-        printf("error.");
-#endif
-#ifdef SSE_TRANSPOSE
-#define OUT_FILE "SSE_TRANSPOSE.txt"
-    if (init_sse_transpose(&o) == -1)
-        printf("error.");
-#endif
-#ifdef SSE_PREFETCH_TRANSPOSE
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE.txt"
+#ifdef SSE_PREFETCH_TRANSPOSE_2
+#define PFDIST  2
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_2.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
+#ifdef SSE_PREFETCH_TRANSPOSE_4
+#define PFDIST  4
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_4.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_6
+#define PFDIST  6
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_6.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_8
+#define PFDIST  8
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_8.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_10
+#define PFDIST  10
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_10.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_12
+#define PFDIST  12
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_12.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_14
+#define PFDIST  14
+#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_14.txt"
+    if (init_sse_prefetch_transpose(&o) == -1)
+        printf("error.");
+#endif
+
 
     /* verify the result of 4x4 matrix */
     {
@@ -87,7 +101,7 @@ int main()
                              2, 6, 10, 14, 3, 7, 11, 15
                            };
 
-        o->transpose(testin, testout, 4, 4);
+        o->transpose(testin, testout, 4, 4, PFDIST);
         assert(0 == memcmp(testout, expected, 16 * sizeof(int)) &&
                "Verification fails");
     }
@@ -105,7 +119,7 @@ int main()
                 *(src + y * TEST_W + x) = rand();
 
         clock_gettime(CLOCK_REALTIME, &start);
-        o->transpose(src, out0, TEST_W, TEST_H);
+        o->transpose(src, out0, TEST_W, TEST_H, PFDIST);
         clock_gettime(CLOCK_REALTIME, &end);
 
         long int cpu_time = diff_in_us(start, end);
@@ -117,14 +131,26 @@ int main()
 
 
 
-#ifdef NAIVE_TRANSPOSE
-        printf("NAIVE_TRANSPOSE: \t %ld us\n", cpu_time);
+#ifdef SSE_PREFETCH_TRANSPOSE_2
+        printf("SSE_PREFETCH_TRANSPOSE_2: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_TRANSPOSE
-        printf("SSE_TRANSPOSE: \t %ld us\n", cpu_time);
+#ifdef SSE_PREFETCH_TRANSPOSE_4
+        printf("SSE_PREFETCH_TRANSPOSE_4: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE
-        printf("SSE_PREFETCH_TRANSPOSE: \t %ld us\n", cpu_time);
+#ifdef SSE_PREFETCH_TRANSPOSE_6
+        printf("SSE_PREFETCH_TRANSPOSE_6: \t %ld us\n", cpu_time);
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_8
+        printf("SSE_PREFETCH_TRANSPOSE_8: \t %ld us\n", cpu_time);
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_10
+        printf("SSE_PREFETCH_TRANSPOSE_10: \t %ld us\n", cpu_time);
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_12
+        printf("SSE_PREFETCH_TRANSPOSE_12: \t %ld us\n", cpu_time);
+#endif
+#ifdef SSE_PREFETCH_TRANSPOSE_14
+        printf("SSE_PREFETCH_TRANSPOSE_14: \t %ld us\n", cpu_time);
 #endif
 
         free(src);
