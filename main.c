@@ -12,7 +12,7 @@
 #include "impl.c"
 
 typedef struct object Object;
-typedef void (*func_t)(int *src, int *dst, int w, int h, int PFDIST);
+typedef void (*func_t)(int *src, int *dst, int w, int h, int Locality_Hint);
 
 struct object {
     func_t transpose;
@@ -25,9 +25,6 @@ int init_sse_prefetch_transpose(Object **self)
     return 0;
 }
 
-/* provide the implementations of naive_transpose,
-* sse_transpose, sse_prefetch_transpose
- */
 
 static long diff_in_us(struct timespec t1, struct timespec t2)
 {
@@ -47,49 +44,30 @@ int main()
 
     Object *o = NULL;
 
-#ifdef SSE_PREFETCH_TRANSPOSE_2
-#define PFDIST  2
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_2.txt"
+#ifdef Hint_T0
+#define Locality_Hint 0
+#define OUT_FILE "T0.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_4
-#define PFDIST  4
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_4.txt"
+#ifdef Hint_T1
+#define Locality_Hint 1
+#define OUT_FILE "T1.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_6
-#define PFDIST  6
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_6.txt"
+#ifdef Hint_T2
+#define Locality_Hint 2
+#define OUT_FILE "T2.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_8
-#define PFDIST  8
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_8.txt"
+#ifdef Hint_NTA
+#define Locality_Hint 3
+#define OUT_FILE "NTA.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_10
-#define PFDIST  10
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_10.txt"
-    if (init_sse_prefetch_transpose(&o) == -1)
-        printf("error.");
-#endif
-#ifdef SSE_PREFETCH_TRANSPOSE_12
-#define PFDIST  12
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_12.txt"
-    if (init_sse_prefetch_transpose(&o) == -1)
-        printf("error.");
-#endif
-#ifdef SSE_PREFETCH_TRANSPOSE_14
-#define PFDIST  14
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE_14.txt"
-    if (init_sse_prefetch_transpose(&o) == -1)
-        printf("error.");
-#endif
-
 
     /* verify the result of 4x4 matrix */
     {
@@ -101,7 +79,7 @@ int main()
                              2, 6, 10, 14, 3, 7, 11, 15
                            };
 
-        o->transpose(testin, testout, 4, 4, PFDIST);
+        o->transpose(testin, testout, 4, 4, Locality_Hint);
         assert(0 == memcmp(testout, expected, 16 * sizeof(int)) &&
                "Verification fails");
     }
@@ -131,27 +109,19 @@ int main()
 
 
 
-#ifdef SSE_PREFETCH_TRANSPOSE_2
-        printf("SSE_PREFETCH_TRANSPOSE_2: \t %ld us\n", cpu_time);
+#ifdef Hint_T0
+        printf("T0: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_4
-        printf("SSE_PREFETCH_TRANSPOSE_4: \t %ld us\n", cpu_time);
+#ifdef Hint_T1
+        printf("T1: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_6
-        printf("SSE_PREFETCH_TRANSPOSE_6: \t %ld us\n", cpu_time);
+#ifdef Hint_T2
+        printf("T2: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_8
-        printf("SSE_PREFETCH_TRANSPOSE_8: \t %ld us\n", cpu_time);
+#ifdef Hint_NTA
+        printf("NTA: \t %ld us\n", cpu_time);
 #endif
-#ifdef SSE_PREFETCH_TRANSPOSE_10
-        printf("SSE_PREFETCH_TRANSPOSE_10: \t %ld us\n", cpu_time);
-#endif
-#ifdef SSE_PREFETCH_TRANSPOSE_12
-        printf("SSE_PREFETCH_TRANSPOSE_12: \t %ld us\n", cpu_time);
-#endif
-#ifdef SSE_PREFETCH_TRANSPOSE_14
-        printf("SSE_PREFETCH_TRANSPOSE_14: \t %ld us\n", cpu_time);
-#endif
+
 
         free(src);
         free(out0);

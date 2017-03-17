@@ -1,14 +1,37 @@
 #ifndef TRANSPOSE_IMPL
 #define TRANSPOSE_IMPL
 
-void sse_prefetch_transpose(int *src, int *dst, int w, int h, int PFDIST)
+void sse_prefetch_transpose(int *src, int *dst, int w, int h, int Locality_Hint)
 {
+#define PFDIST 8
     for (int x = 0; x < w; x += 4) {
         for (int y = 0; y < h; y += 4) {
-            _mm_prefetch(src+(y + PFDIST + 0) *w + x, _MM_HINT_T1);
-            _mm_prefetch(src+(y + PFDIST + 1) *w + x, _MM_HINT_T1);
-            _mm_prefetch(src+(y + PFDIST + 2) *w + x, _MM_HINT_T1);
-            _mm_prefetch(src+(y + PFDIST + 3) *w + x, _MM_HINT_T1);
+            switch (Locality_Hint) {
+                case 0:
+                    _mm_prefetch(src+(y + PFDIST + 0) *w + x, _MM_HINT_T0);
+                    _mm_prefetch(src+(y + PFDIST + 1) *w + x, _MM_HINT_T0);
+                    _mm_prefetch(src+(y + PFDIST + 2) *w + x, _MM_HINT_T0);
+                    _mm_prefetch(src+(y + PFDIST + 3) *w + x, _MM_HINT_T0);
+                    break;
+                case 1:
+                    _mm_prefetch(src+(y + PFDIST + 0) *w + x, _MM_HINT_T1);
+                    _mm_prefetch(src+(y + PFDIST + 1) *w + x, _MM_HINT_T1);
+                    _mm_prefetch(src+(y + PFDIST + 2) *w + x, _MM_HINT_T1);
+                    _mm_prefetch(src+(y + PFDIST + 3) *w + x, _MM_HINT_T1);
+                    break;
+                case 2:
+                    _mm_prefetch(src+(y + PFDIST + 0) *w + x, _MM_HINT_T2);
+                    _mm_prefetch(src+(y + PFDIST + 1) *w + x, _MM_HINT_T2);
+                    _mm_prefetch(src+(y + PFDIST + 2) *w + x, _MM_HINT_T2);
+                    _mm_prefetch(src+(y + PFDIST + 3) *w + x, _MM_HINT_T2);
+                    break;
+                case 3:
+                    _mm_prefetch(src+(y + PFDIST + 0) *w + x, _MM_HINT_NTA);
+                    _mm_prefetch(src+(y + PFDIST + 1) *w + x, _MM_HINT_NTA);
+                    _mm_prefetch(src+(y + PFDIST + 2) *w + x, _MM_HINT_NTA);
+                    _mm_prefetch(src+(y + PFDIST + 3) *w + x, _MM_HINT_NTA);
+                    break;
+            }
 
             __m128i I0 = _mm_loadu_si128 ((__m128i *)(src + (y + 0) * w + x));
             __m128i I1 = _mm_loadu_si128 ((__m128i *)(src + (y + 1) * w + x));
@@ -26,8 +49,8 @@ void sse_prefetch_transpose(int *src, int *dst, int w, int h, int PFDIST)
             _mm_storeu_si128((__m128i *)(dst + ((x + 1) * h) + y), I1);
             _mm_storeu_si128((__m128i *)(dst + ((x + 2) * h) + y), I2);
             _mm_storeu_si128((__m128i *)(dst + ((x + 3) * h) + y), I3);
+
         }
     }
 }
-
 #endif /* TRANSPOSE_IMPL */
