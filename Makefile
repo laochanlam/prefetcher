@@ -1,23 +1,23 @@
 CFLAGS = -msse2 --std gnu99 -O0 -Wall -Wextra -mavx2
 
-EXEC = naive_transpose sse_transpose sse_prefetch_transpose avx_transpose avx_prefetch_transpose calculate
+EXEC = local/naive_transpose local/sse_transpose local/sse_prefetch_transpose local/avx_transpose local/avx_prefetch_transpose local/calculate
 GIT_HOOKS := .git/hooks/applied
 CC ?= gcc
 SRCS_common = main.c
 
-naive_transpose: main.c
+local/naive_transpose: main.c
 	$(CC) $(CFLAGS) -DNAIVE_TRANSPOSE -o $@ $(SRCS_common)
 
-sse_transpose: main.c
+local/sse_transpose: main.c
 	$(CC) $(CFLAGS) -DSSE_TRANSPOSE -o $@ $(SRCS_common)
 
-sse_prefetch_transpose: main.c
+local/sse_prefetch_transpose: main.c
 	$(CC) $(CFLAGS) -DSSE_PREFETCH_TRANSPOSE -o $@ $(SRCS_common)
 
-avx_transpose: main.c
+local/avx_transpose: main.c
 	$(CC) $(CFLAGS) -DAVX_TRANSPOSE -o $@ $(SRCS_common)
 
-avx_prefetch_transpose: main.c
+local/avx_prefetch_transpose: main.c
 	$(CC) $(CFLAGS) -DAVX_PREFETCH_TRANSPOSE -o $@ $(SRCS_common)
 
 
@@ -31,27 +31,27 @@ $(GIT_HOOKS):
 perf: $(EXEC)
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./naive_transpose
+		./local/naive_transpose
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./sse_transpose
+		./local/sse_transpose
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./sse_prefetch_transpose
+		./local/sse_prefetch_transpose
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./avx_transpose
+		./local/avx_transpose
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./avx_prefetch_transpose
+		./local/avx_prefetch_transpose
 
-output.txt: calculate perf
-	./calculate
+output.txt: local/calculate perf
+	./local/calculate
 
 plot: output.txt
 	gnuplot scripts/runtime.gp
 
-calculate: calculate.c
+local/calculate: calculate.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean:

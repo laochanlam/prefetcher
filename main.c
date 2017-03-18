@@ -77,28 +77,28 @@ int main()
     Object *o = NULL;
 
 #ifdef NAIVE_TRANSPOSE
-#define OUT_FILE "NAIVE_TRANSPOSE.txt"
+#define OUT_FILE "local/NAIVE_TRANSPOSE.txt"
     if (init_naive_transpose(&o) == -1)
         printf("error.");
 #endif
 #ifdef SSE_TRANSPOSE
-#define OUT_FILE "SSE_TRANSPOSE.txt"
+#define OUT_FILE "local/SSE_TRANSPOSE.txt"
     if (init_sse_transpose(&o) == -1)
         printf("error.");
 #endif
 #ifdef SSE_PREFETCH_TRANSPOSE
-#define OUT_FILE "SSE_PREFETCH_TRANSPOSE.txt"
+#define OUT_FILE "local/SSE_PREFETCH_TRANSPOSE.txt"
     if (init_sse_prefetch_transpose(&o) == -1)
         printf("error.");
 #endif
 #ifdef AVX_TRANSPOSE
-#define OUT_FILE "AVX_TRANSPOSE.txt"
+#define OUT_FILE "local/AVX_TRANSPOSE.txt"
     if (init_avx_transpose(&o) == -1)
         printf("error.");
 #define HUGE 1
 #endif
 #ifdef AVX_PREFETCH_TRANSPOSE
-#define OUT_FILE "AVX_PREFETCH_TRANSPOSE.txt"
+#define OUT_FILE "local/AVX_PREFETCH_TRANSPOSE.txt"
     if (init_avx_prefetch_transpose(&o) == -1)
         printf("error.");
 #define HUGE 1
