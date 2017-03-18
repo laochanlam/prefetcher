@@ -1,6 +1,6 @@
-CFLAGS = -msse2 --std gnu99 -O0 -Wall -Wextra
+CFLAGS = -msse2 --std gnu99 -O0 -Wall -Wextra -mavx2
 
-EXEC = naive_transpose sse_transpose sse_prefetch_transpose calculate
+EXEC = naive_transpose sse_transpose sse_prefetch_transpose avx_transpose avx_prefetch_transpose calculate
 GIT_HOOKS := .git/hooks/applied
 CC ?= gcc
 SRCS_common = main.c
@@ -13,6 +13,12 @@ sse_transpose: main.c
 
 sse_prefetch_transpose: main.c
 	$(CC) $(CFLAGS) -DSSE_PREFETCH_TRANSPOSE -o $@ $(SRCS_common)
+
+avx_transpose: main.c
+	$(CC) $(CFLAGS) -DAVX_TRANSPOSE -o $@ $(SRCS_common)
+
+avx_prefetch_transpose: main.c
+	$(CC) $(CFLAGS) -DAVX_PREFETCH_TRANSPOSE -o $@ $(SRCS_common)
 
 
 all: $(GIT_HOOKS) $(EXEC)
@@ -32,6 +38,12 @@ perf: $(EXEC)
 	perf stat --repeat 20 \
 		-e cache-misses,cache-references,instructions,cycles \
 		./sse_prefetch_transpose
+	perf stat --repeat 20 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./avx_transpose
+	perf stat --repeat 20 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./avx_prefetch_transpose
 
 output.txt: calculate perf
 	./calculate

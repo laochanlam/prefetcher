@@ -7,4 +7,6 @@ set output 'runtime.png'
 
 plot [:][:260000]'output.txt' using 2:xtic(1) with histogram title 'naive transpose', \
 '' using 3:xtic(1) with histogram title 'sse transpose'  , \
-'' using 4:xtic(1) with histogram title 'sse prefetch transpose'
+'' using 4:xtic(1) with histogram title 'sse prefetch transpose' , \
+'' using 5:xtic(1) with histogram title 'avx transpose' , \
+'' using 6:xtic(1) with histogram title 'avx prefetch transpose'

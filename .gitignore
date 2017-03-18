@@ -12,3 +12,5 @@ sse_prefetch_transpose
 calculate
 *.txt
 runtime.png
+avx_transpose
+avx_prefetch_transpose

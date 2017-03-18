@@ -52,9 +52,37 @@ int main(void)
     }
     fclose(fp);
 
+    fp = fopen("AVX_TRANSPOSE.txt", "r");
+    long int avx_transpose_sum_a = 0.0, avx_transpose_a;
+    for (i = 0; i < 20; i++) {
+        if (feof(fp)) {
+            printf("ERROR: You need 20 datum instead of %d\n", i);
+            printf("run 'make run' longer to get enough information\n\n");
+            exit(0);
+        }
+        fscanf(fp, "%s %s %ld \n", stringA, stringB , &avx_transpose_a);
+        avx_transpose_sum_a += avx_transpose_a;
 
-    fprintf(output, "time: %ld %ld %ld\n", naive_transpose_sum_a / 20, sse_transpose_sum_a / 20, sse_prefetch_transpose_sum_a / 20);
-    printf("time: %ld %ld %ld\n", naive_transpose_sum_a / 20, sse_transpose_sum_a / 20, sse_prefetch_transpose_sum_a / 20);
+    }
+    fclose(fp);
+
+    fp = fopen("AVX_PREFETCH_TRANSPOSE.txt", "r");
+    long int avx_prefetch_transpose_sum_a = 0.0, avx_prefetch_transpose_a;
+    for (i = 0; i < 20; i++) {
+        if (feof(fp)) {
+            printf("ERROR: You need 20 datum instead of %d\n", i);
+            printf("run 'make run' longer to get enough information\n\n");
+            exit(0);
+        }
+        fscanf(fp, "%s %s %ld \n", stringA, stringB , &avx_prefetch_transpose_a);
+        avx_prefetch_transpose_sum_a += avx_prefetch_transpose_a;
+
+    }
+    fclose(fp);
+
+
+    fprintf(output, "time: %ld %ld %ld %ld %ld\n", naive_transpose_sum_a / 20, sse_transpose_sum_a / 20, sse_prefetch_transpose_sum_a / 20, avx_transpose_sum_a / 20, avx_prefetch_transpose_sum_a / 20);
+    printf("time: %ld %ld %ld %ld %ld\n", naive_transpose_sum_a / 20, sse_transpose_sum_a / 20, sse_prefetch_transpose_sum_a / 20,avx_transpose_sum_a / 20, avx_prefetch_transpose_sum_a / 20);
     fclose(output);
     return 0;
 }
